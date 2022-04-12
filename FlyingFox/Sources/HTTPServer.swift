@@ -94,6 +94,7 @@ public final actor HTTPServer {
 
     public func start() async throws {
         let socket = try makeSocketAndListen()
+        print("🤠", "listening", socket.file.rawValue)
         isListening = true
         do {
             try await start(on: socket, pool: pool)

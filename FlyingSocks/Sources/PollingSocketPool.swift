@@ -154,12 +154,14 @@ public final actor PollingSocketPool: AsyncSocketPool {
 
     private func processPoll(socket: SuspendedSocket, revents: POLLEvents) {
         if revents.intersects(with: socket.events.pollEvents) {
+            print("🤠", "events", socket.file.rawValue, socket.events)
             let continuations = waiting[socket]
             waiting[socket] = nil
             continuations?.forEach {
                 $0.resume()
             }
         } else if revents.intersects(with: .errors) {
+            print("🤠", "errors", socket.file.rawValue, socket.events)
             let continuations = waiting[socket]
             waiting[socket] = nil
             continuations?.forEach {
