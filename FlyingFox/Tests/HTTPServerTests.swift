@@ -155,16 +155,20 @@ final class HTTPServerTests: XCTestCase {
         }
         let task = Task { try await server.start() }
         defer { task.cancel() }
+        print("🤠", "stared")
         try await server.waitUntilListening()
+        print("🤠", "listening")
 
         let socket = try await AsyncSocket.connected(to: address)
+        print("🤠", "connected")
         defer { try? socket.close() }
         try await socket.writeRequest(.make())
-
+        print("🤠", "write")
         await XCTAssertEqualAsync(
             try await socket.readResponse().statusCode,
             .accepted
         )
+        print("🤠", "done")
     }
     #endif
 

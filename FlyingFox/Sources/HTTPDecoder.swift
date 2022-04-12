@@ -71,9 +71,13 @@ struct HTTPDecoder {
 
         let version = HTTPVersion(String(comps[0]))
         let statusCode = HTTPStatusCode(code, phrase: String(comps[2]))
+        print("🤠", "statusCode")
 
         let headers = try await Self.readHeaders(from: bytes)
+        print("🤠", "headers")
+
         let body = try await HTTPDecoder.readBody(from: bytes, length: headers[.contentLength])
+        print("🤠", "body")
 
         return HTTPResponse(
             version: version,
