@@ -15,4 +15,4 @@ jobs:
       - name: Version
         run: swift --version
       - name: Build and Test
-        run: swift test
+        run: swift test --filter testServer_StartsOnUnixSocket
