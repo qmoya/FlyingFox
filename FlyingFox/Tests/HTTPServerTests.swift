@@ -163,6 +163,7 @@ final class HTTPServerTests: XCTestCase {
         defer { try? socket.close() }
         try await socket.writeRequest(.make())
         print("🤠", "write")
+        try await Task.sleep(nanoseconds: 1_000_000_000)
         await XCTAssertEqualAsync(
             try await socket.readResponse().statusCode,
             .accepted
