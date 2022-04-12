@@ -41,9 +41,10 @@ public final actor PollingSocketPool: AsyncSocketPool {
         case seconds(TimeInterval)
     }
 
-    public init(pollInterval: Interval, loopInterval: Interval) {
+    public init(pollInterval: Interval, loopInterval: Interval, doLog: Bool = false) {
         self.pollInterval = pollInterval
         self.loopInterval = loopInterval
+        self.doLog = doLog
     }
 
     public func suspendSocket(_ socket: Socket, untilReadyFor events: Socket.Events) async throws {
@@ -59,6 +60,7 @@ public final actor PollingSocketPool: AsyncSocketPool {
 
     private let pollInterval: Interval
     private let loopInterval: Interval
+    private let doLog: Bool
     private var waiting: [SuspendedSocket: Set<Continuation>] = [:] {
         didSet {
             if !waiting.isEmpty, let continuation = loop {
@@ -121,7 +123,9 @@ public final actor PollingSocketPool: AsyncSocketPool {
             waiting = [:]
             state = .complete
             loop = nil
-            print("🤠", "cancelling poll")
+            if doLog {
+                print("🤠", "cancelling poll")
+            }
         }
 
         try await poll()
@@ -155,14 +159,19 @@ public final actor PollingSocketPool: AsyncSocketPool {
 
     private func processPoll(socket: SuspendedSocket, revents: POLLEvents) {
         if revents.intersects(with: socket.events.pollEvents) {
-            print("🤠", "events", socket.file.rawValue, socket.events)
+            if doLog {
+                print("🤠", "events", socket.file.rawValue, socket.events)
+            }
+
             let continuations = waiting[socket]
             waiting[socket] = nil
             continuations?.forEach {
                 $0.resume()
             }
         } else if revents.intersects(with: .errors) {
-            print("🤠", "errors", socket.file.rawValue, socket.events)
+            if doLog {
+                print("🤠", "errors", socket.file.rawValue, socket.events)
+            }
             let continuations = waiting[socket]
             waiting[socket] = nil
             continuations?.forEach {
@@ -226,6 +235,14 @@ public final actor PollingSocketPool: AsyncSocketPool {
 extension PollingSocketPool {
     static let client: PollingSocketPool = {
         let pool = PollingSocketPool(pollInterval: .immediate, loopInterval: .seconds(0.1))
+        Task { try await pool.run() }
+        return pool
+    }()
+}
+
+extension PollingSocketPool {
+    static let loggingClient: PollingSocketPool = {
+        let pool = PollingSocketPool(pollInterval: .immediate, loopInterval: .seconds(0.1), doLog: true)
         Task {
             do {
                 try await pool.run()

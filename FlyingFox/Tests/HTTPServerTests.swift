@@ -172,7 +172,7 @@ final class HTTPServerTests: XCTestCase {
     }
 
     func testServer_StartsOnIP4Socket() async throws {
-        let server = HTTPServer.make(address: .inet(port: 8080))
+        let server = HTTPServer.make(address: .inet(port: 8080), pool: PollingSocketPool(pollInterval: .seconds(0.1), loopInterval: .immediate, doLog: true))
         await server.appendRoute("*") { _ in
             return HTTPResponse.make(statusCode: .accepted)
         }
@@ -181,7 +181,7 @@ final class HTTPServerTests: XCTestCase {
         defer { task.cancel() }
         try await server.waitUntilListening()
 
-        let socket = try await AsyncSocket.connected(to: .inet(ip4: "127.0.0.1", port: 8080))
+        let socket = try await AsyncSocket.connected(to: .inet(ip4: "127.0.0.1", port: 8080), pool: PollingSocketPool.loggingClient)
         defer { try? socket.close() }
 
         try await socket.writeRequest(.make())
@@ -389,10 +389,12 @@ extension HTTPServer {
 
     static func make<A: SocketAddress>(address: A,
                                        timeout: TimeInterval = 15,
+                                       pool: AsyncSocketPool = HTTPServer.defaultPool(),
                                        logger: HTTPLogging? = defaultLogger(),
                                        handler: HTTPHandler? = nil) -> HTTPServer {
         HTTPServer(address: address,
                    timeout: timeout,
+                   pool: pool,
                    logger: logger,
                    handler: handler)
     }
