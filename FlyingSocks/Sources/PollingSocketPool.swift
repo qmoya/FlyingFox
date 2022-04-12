@@ -121,6 +121,7 @@ public final actor PollingSocketPool: AsyncSocketPool {
             waiting = [:]
             state = .complete
             loop = nil
+            print("🤠", "cancelling poll")
         }
 
         try await poll()
@@ -225,7 +226,13 @@ public final actor PollingSocketPool: AsyncSocketPool {
 extension PollingSocketPool {
     static let client: PollingSocketPool = {
         let pool = PollingSocketPool(pollInterval: .immediate, loopInterval: .seconds(0.1))
-        Task { try await pool.run() }
+        Task {
+            do {
+                try await pool.run()
+            } catch {
+                print("🤠", "poll failed", error)
+            }
+        }
         return pool
     }()
 }
