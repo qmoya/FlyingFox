@@ -15,6 +15,6 @@ jobs:
       - name: Version
         run: swift --version
       - name: Build
-        run: swift build
-      - name: Build and Test
+        run: swift build --build-tests
+      - name: Test
         run: swift test --filter HTTPServerTests
