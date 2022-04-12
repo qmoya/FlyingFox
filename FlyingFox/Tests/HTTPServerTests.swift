@@ -152,15 +152,22 @@ final class HTTPServerTests: XCTestCase {
         await server.appendRoute("*") { _ in
             return HTTPResponse.make(statusCode: .accepted)
         }
-        let task = Task { try await server.start() }
+        let task = Task {
+            print("🤠", "starting")
+            try await server.start()
+            print("🤠", "stopped")
+        }
         defer { task.cancel() }
-        print("🤠", "stared")
+        print("🤠", "started")
         try await server.waitUntilListening()
         print("🤠", "listening")
 
         let socket = try await AsyncSocket.connected(to: address)
         print("🤠", "connected")
-        defer { try? socket.close() }
+        defer {
+            try? socket.close()
+            print("🤠", "closed")
+        }
         try await socket.writeRequest(.make())
         print("🤠", "write")
         try await Task.sleep(nanoseconds: 1_000_000_000)
